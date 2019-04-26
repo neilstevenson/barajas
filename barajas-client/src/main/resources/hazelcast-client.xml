@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hazelcast-client xsi:schemaLocation="http://www.hazelcast.com/schema/client-config hazelcast-client-config-3.12.xsd"
+           xmlns="http://www.hazelcast.com/schema/client-config"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+           
+    <network>
+        <cluster-members>
+                <address>127.0.0.1</address>
+        </cluster-members>
+    </network>
+
+    <near-cache name="with">
+    	<!-- Try also with "BINARY", more serialization but less heap 
+        <in-memory-format>BINARY</in-memory-format>
+    	-->
+        <in-memory-format>OBJECT</in-memory-format>
+    </near-cache>
+
+    <serialization>
+        <data-serializable-factories>
+            <data-serializable-factory factory-id="1">
+                neil.demo.nearcache.MyDataSerializableFactory
+            </data-serializable-factory>
+        </data-serializable-factories>
+    </serialization>
+</hazelcast-client>
