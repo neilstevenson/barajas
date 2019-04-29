@@ -1,5 +1,6 @@
 package neil.demo.nearcache;
 
+import java.math.BigDecimal;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,11 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @Slf4j
 public class ApplicationTest implements CommandLineRunner {
+
+	private static final int MAX = 1_000_000;
+	
+	private static final int CPUS =
+			Runtime.getRuntime().availableProcessors();
 
 	@Autowired
 	private HazelcastInstance hazelcastInstance;
@@ -37,15 +43,15 @@ public class ApplicationTest implements CommandLineRunner {
 		log.info("Data loaded");
 		log.info("------------------------");		
 		
-		this.runTests(with);
-		this.runTests(without);
+		long elapsedWith = this.runTests(with);
+		long elapsedWithout = this.runTests(without);
 
 		TimeUnit.SECONDS.sleep(2);
 		log.info("Test run");
 		log.info("------------------------");		
 		
-		this.reportStatistics(with);
-		this.reportStatistics(without);
+		this.reportStatistics(with, elapsedWith);
+		this.reportStatistics(without, elapsedWithout);
 		
 		log.info("------------------------");
 		log.info("End");
@@ -95,7 +101,7 @@ public class ApplicationTest implements CommandLineRunner {
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private void runTests(IMap iMap) {
+	private long runTests(IMap iMap) {
 		
 		iMap.get(1); // Miss
 		
@@ -113,9 +119,16 @@ public class ApplicationTest implements CommandLineRunner {
 		iMap.get(3); // Miss
 		iMap.get(3); // Hit
 		
+		long start = System.currentTimeMillis();
+		for (int i=0 ; i < MAX ; i++) {
+			o = iMap.get(3);
+		}
+		long end = System.currentTimeMillis();
+		
+		return (end - start);
 	}
 
-	private void reportStatistics(IMap<?,?> iMap) {
+	private void reportStatistics(IMap<?,?> iMap, long elapsed) {
 		System.out.println("=======================");
 		System.out.println("IMap: " + iMap.getName());
 
@@ -133,6 +146,13 @@ public class ApplicationTest implements CommandLineRunner {
 	            System.out.println("Near Cache misses. : " + nearCacheStats.getMisses());
 			}
 		}
+
+		System.out.println(MAX + " get() on " + CPUS + " processors: " + elapsed + "ms");
+		
+		BigDecimal top = new BigDecimal(elapsed);
+		BigDecimal bottom = new BigDecimal(MAX);
+		
+		System.out.println("Average get() : " + top.divide(bottom));
 		
 		System.out.println("-----------------------");
 	}
